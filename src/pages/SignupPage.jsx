@@ -37,7 +37,7 @@ const SignupPage = () => {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <h1 className="auth-logo">✈️ Wanderlust</h1>
+            <h1 className="auth-logo">✈️ WanderClub</h1>
             <p className="auth-subtitle">Create your account and start planning!</p>
           </div>
 

@@ -60,7 +60,7 @@ const LandingPage = () => {
           </h1>
 
           <p className="hero-description">
-            Wanderlust helps you plan the perfect trip with AI-powered suggestions,
+            WanderClub helps you plan the perfect trip with AI-powered suggestions,
             smart budgeting, and a beautiful itinerary — all in one place.
           </p>
 
@@ -134,7 +134,7 @@ const LandingPage = () => {
             Ready to Start Planning?
           </h2>
           <p className="cta-description">
-            Join thousands of travelers who use Wanderlust to plan unforgettable trips.
+            Join thousands of travelers who use WanderClub to plan unforgettable trips.
           </p>
           <Link to={isAuthenticated ? '/dashboard' : '/signup'}>
             <Button variant="primary" size="lg" icon={<ArrowRight size={20} />}>

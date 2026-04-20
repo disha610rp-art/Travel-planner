@@ -4,7 +4,6 @@ import { AuthProvider } from './context/AuthContext';
 import { TripProvider } from './context/TripContext';
 import useAuth from './hooks/useAuth';
 import Navbar from './components/layout/Navbar';
-import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './App.css';
 
@@ -65,7 +64,6 @@ const AppContent = () => {
             </Routes>
           </Suspense>
         </div>
-        <Footer />
       </div>
     </TripProvider>
   );

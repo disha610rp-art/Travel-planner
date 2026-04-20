@@ -39,7 +39,7 @@ const LoginPage = () => {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <h1 className="auth-logo">✈️ Wanderlust</h1>
+            <h1 className="auth-logo">✈️ WanderClub</h1>
             <p className="auth-subtitle">Welcome back! Log in to plan your next adventure.</p>
           </div>
 

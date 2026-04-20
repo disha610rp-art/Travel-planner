@@ -35,7 +35,7 @@ const Navbar = () => {
         {/* Logo */}
         <Link to={isAuthenticated ? '/dashboard' : '/'} className="navbar-logo" onClick={closeMenu}>
           <Map size={24} className="navbar-logo-icon" />
-          <span className="navbar-logo-text">Wanderlust</span>
+          <span className="navbar-logo-text">WanderClub</span>
         </Link>
 
         {/* Desktop Nav */}
