@@ -1,0 +1,73 @@
+/* ===== CARD COMPONENT ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hoverable:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-medium);
+}
+
+.card-clickable {
+  cursor: pointer;
+}
+
+.card-clickable:focus-visible {
+  outline: 2px solid var(--pastel-purple);
+  outline-offset: 2px;
+}
+
+/* Accent variants — top border accent */
+.card-pink {
+  border-top: 3px solid var(--pastel-pink);
+}
+
+.card-pink.card-hoverable:hover {
+  box-shadow: var(--shadow-pink);
+}
+
+.card-blue {
+  border-top: 3px solid var(--pastel-blue);
+}
+
+.card-blue.card-hoverable:hover {
+  box-shadow: var(--shadow-blue);
+}
+
+.card-purple {
+  border-top: 3px solid var(--pastel-purple);
+}
+
+.card-purple.card-hoverable:hover {
+  box-shadow: var(--shadow-purple);
+}
+
+.card-mint {
+  border-top: 3px solid var(--pastel-mint);
+}
+
+.card-mint.card-hoverable:hover {
+  box-shadow: 0 4px 16px rgba(181, 255, 216, 0.3);
+}
+
+.card-peach {
+  border-top: 3px solid var(--pastel-peach);
+}
+
+.card-peach.card-hoverable:hover {
+  box-shadow: 0 4px 16px rgba(255, 216, 181, 0.3);
+}
+
+/* Glassmorphism variant */
+.card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}

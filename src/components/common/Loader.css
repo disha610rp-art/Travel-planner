@@ -1,0 +1,52 @@
+/* ===== LOADER COMPONENT ===== */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+}
+
+.loader-fullpage {
+  min-height: 60vh;
+}
+
+.loader {
+  position: relative;
+}
+
+.loader-sm { width: 32px; height: 32px; }
+.loader-md { width: 48px; height: 48px; }
+.loader-lg { width: 64px; height: 64px; }
+
+.loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.loader-ring:nth-child(1) {
+  border-top-color: var(--pastel-pink);
+  animation-delay: -0.3s;
+}
+
+.loader-ring:nth-child(2) {
+  border-top-color: var(--pastel-purple);
+  animation-delay: -0.15s;
+  inset: 4px;
+}
+
+.loader-ring:nth-child(3) {
+  border-top-color: var(--pastel-blue);
+  inset: 8px;
+}
+
+.loader-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  animation: fadeIn 0.5s ease-out;
+}
