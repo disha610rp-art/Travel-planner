@@ -9,35 +9,51 @@ const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
  * @param {string} userPrompt - User's query
  * @returns {Promise<string>} AI response text
  */
-const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
+const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500, retries = 2) => {
   if (!API_KEY) {
     throw new Error('Groq API key is not configured. Please add VITE_GROQ_API_KEY to your .env file.');
   }
 
-  const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: maxTokens,
-    }),
-  });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gemma2-9b-it',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.5, // Lowered temperature slightly for more stable JSON
+          max_tokens: maxTokens,
+        }),
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Groq API error: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const status = response.status;
+        
+        // If it's a rate limit or capacity error and we have retries left, wait and try again
+        if ((status === 429 || status === 503) && attempt < retries) {
+          console.warn(`Groq API error ${status}. Retrying in 3 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          continue;
+        }
+        
+        throw new Error(errorData.error?.message || \`Groq API error: \${status}\`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content || '';
+      return content;
+    } catch (err) {
+      if (attempt === retries) throw err;
+    }
   }
-
-  const data = await response.json();
-  return data.choices[0]?.message?.content || '';
 };
 
 /**
