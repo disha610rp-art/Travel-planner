@@ -21,7 +21,7 @@ const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      model: 'mixtral-8x7b-32768',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -110,7 +110,7 @@ Respond ONLY with a JSON object in this exact format:
 
 Include 4-5 activities per day covering morning, afternoon, and evening. Make cost estimates realistic for the ${budget} budget level. Use unique IDs for each activity (e.g., "d1a1", "d1a2", "d2a1").`;
 
-  const response = await callGroq(systemPrompt, userPrompt, 1200);
+  const response = await callGroq(systemPrompt, userPrompt, 1500);
   return parseJSON(response);
 };
 
@@ -144,7 +144,7 @@ Respond ONLY with a JSON array:
 ]
 \`\`\``;
 
-  const response = await callGroq(systemPrompt, userPrompt, 400);
+  const response = await callGroq(systemPrompt, userPrompt, 800);
   return parseJSON(response);
 };
 
@@ -179,7 +179,7 @@ Respond ONLY with a JSON array:
 ]
 \`\`\``;
 
-  const response = await callGroq(systemPrompt, userPrompt, 400);
+  const response = await callGroq(systemPrompt, userPrompt, 800);
   return parseJSON(response);
 };
 
@@ -213,7 +213,7 @@ Respond ONLY with a JSON array:
 ]
 \`\`\``;
 
-  const response = await callGroq(systemPrompt, userPrompt, 400);
+  const response = await callGroq(systemPrompt, userPrompt, 800);
   return parseJSON(response);
 };
 
@@ -252,7 +252,7 @@ Respond ONLY with a JSON object:
 
 Make sure percentages add up to 100 and amounts are realistic for the ${budget} budget level.`;
 
-  const response = await callGroq(systemPrompt, userPrompt, 300);
+  const response = await callGroq(systemPrompt, userPrompt, 800);
   return parseJSON(response);
 };
 
