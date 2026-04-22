@@ -9,7 +9,7 @@ const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
  * @param {string} userPrompt - User's query
  * @returns {Promise<string>} AI response text
  */
-const callGroq = async (systemPrompt, userPrompt) => {
+const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
   if (!API_KEY) {
     throw new Error('Groq API key is not configured. Please add VITE_GROQ_API_KEY to your .env file.');
   }
@@ -27,7 +27,7 @@ const callGroq = async (systemPrompt, userPrompt) => {
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.7,
-      max_tokens: 1500,
+      max_tokens: maxTokens,
     }),
   });
 
@@ -110,7 +110,7 @@ Respond ONLY with a JSON object in this exact format:
 
 Include 4-5 activities per day covering morning, afternoon, and evening. Make cost estimates realistic for the ${budget} budget level. Use unique IDs for each activity (e.g., "d1a1", "d1a2", "d2a1").`;
 
-  const response = await callGroq(systemPrompt, userPrompt);
+  const response = await callGroq(systemPrompt, userPrompt, 1200);
   return parseJSON(response);
 };
 
@@ -144,7 +144,7 @@ Respond ONLY with a JSON array:
 ]
 \`\`\``;
 
-  const response = await callGroq(systemPrompt, userPrompt);
+  const response = await callGroq(systemPrompt, userPrompt, 400);
   return parseJSON(response);
 };
 
@@ -179,7 +179,7 @@ Respond ONLY with a JSON array:
 ]
 \`\`\``;
 
-  const response = await callGroq(systemPrompt, userPrompt);
+  const response = await callGroq(systemPrompt, userPrompt, 400);
   return parseJSON(response);
 };
 
@@ -213,7 +213,7 @@ Respond ONLY with a JSON array:
 ]
 \`\`\``;
 
-  const response = await callGroq(systemPrompt, userPrompt);
+  const response = await callGroq(systemPrompt, userPrompt, 400);
   return parseJSON(response);
 };
 
@@ -252,7 +252,7 @@ Respond ONLY with a JSON object:
 
 Make sure percentages add up to 100 and amounts are realistic for the ${budget} budget level.`;
 
-  const response = await callGroq(systemPrompt, userPrompt);
+  const response = await callGroq(systemPrompt, userPrompt, 300);
   return parseJSON(response);
 };
 
