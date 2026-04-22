@@ -260,7 +260,7 @@ Make sure percentages add up to 100 and amounts are realistic for the ${budget} 
  * Generate full trip (Itinerary, Hotels, Restaurants, Places, Expenses) in ONE call to save TPM rate limits
  */
 export const generateFullTrip = async ({ destination, days, budget, travelers, preferences, allergies, interests }) => {
-  const systemPrompt = `You are a master travel planner. Generate a complete travel package including itinerary, hotels, restaurants, places to visit, and a budget breakdown. Return ONLY valid JSON wrapped in a markdown code block.`;
+  const systemPrompt = `You are a master travel planner. Generate a complete travel package including itinerary, hotels, restaurants, places to visit, and a budget breakdown. Return ONLY valid JSON wrapped in a markdown code block. Do not include any trailing text.`;
 
   const userPrompt = `Create a complete ${days}-day travel package for ${destination}.
 Details:
@@ -270,7 +270,8 @@ Details:
 - Interests: ${interests || 'None'}
 - General Notes: ${preferences || 'None'}
 
-Respond ONLY with this exact JSON structure (populate with 3 hotels, 4 restaurants, 5 places, and ${days} days of itinerary):
+Respond ONLY with this exact JSON structure. Keep descriptions very brief to save space.
+Populate with EXACTLY 2 hotels, 2 restaurants, 2 places, and ${days} days of itinerary.
 \`\`\`json
 {
   "itinerary": {
@@ -287,7 +288,7 @@ Respond ONLY with this exact JSON structure (populate with 3 hotels, 4 restauran
         ]
       }
     ],
-    "tips": ["Tip 1", "Tip 2"]
+    "tips": ["Tip 1"]
   },
   "hotels": [
     { "id": "h1", "name": "Hotel Name", "type": "hotel", "pricePerNight": 80, "totalPrice": 240, "rating": 4.5, "location": "Area", "amenities": ["WiFi"], "description": "Desc", "whyRecommended": "Why" }
@@ -311,8 +312,8 @@ Respond ONLY with this exact JSON structure (populate with 3 hotels, 4 restauran
 }
 \`\`\``;
 
-  // Give a very large token limit because it generates a huge JSON, but since it's only 1 request, TPM won't spike
-  const response = await callGroq(systemPrompt, userPrompt, 3500);
+  // Set tokens precisely to 2000 to guarantee it never exceeds 6000 TPM even on retries.
+  const response = await callGroq(systemPrompt, userPrompt, 2000);
   return parseJSON(response);
 };
 
