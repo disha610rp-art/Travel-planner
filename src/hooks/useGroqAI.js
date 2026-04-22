@@ -48,6 +48,11 @@ const useGroqAI = () => {
     [callAPI]
   );
 
+  const generateFullTrip = useCallback(
+    (params) => callAPI(groqService.generateFullTrip, params),
+    [callAPI]
+  );
+
   const clearError = useCallback(() => setError(null), []);
 
   return {
@@ -59,6 +64,7 @@ const useGroqAI = () => {
     suggestRestaurants,
     suggestPlaces,
     generateExpenseBreakdown,
+    generateFullTrip,
   };
 };
 

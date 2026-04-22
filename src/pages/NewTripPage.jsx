@@ -23,7 +23,7 @@ import './NewTripPage.css';
 const NewTripPage = () => {
   const navigate = useNavigate();
   const { addTrip } = useTrips();
-  const { generateItinerary, suggestHotels, suggestRestaurants, suggestPlaces, generateExpenseBreakdown, loading: aiLoading, error: aiError } = useGroqAI();
+  const { generateFullTrip, loading: aiLoading, error: aiError } = useGroqAI();
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -105,30 +105,28 @@ const NewTripPage = () => {
       .filter(Boolean)
       .join('. ');
 
-    // Run all AI calls
-    const [itinerary, hotels, restaurants, places] = await Promise.all([
-      generateItinerary({
-        destination: formData.destination,
-        days: numDays,
-        budget: formData.budget,
-        travelers: formData.travelers,
-        preferences: prefs,
-      }),
-      suggestHotels(formData.destination, formData.budget, numDays - 1),
-      suggestRestaurants(formData.destination, formData.budget, formData.allergies),
-      suggestPlaces(formData.destination, numDays, formData.interests),
-    ]);
+    // Run single consolidated AI call
+    const fullTrip = await generateFullTrip({
+      destination: formData.destination,
+      days: numDays,
+      budget: formData.budget,
+      travelers: formData.travelers,
+      preferences: prefs,
+      allergies: formData.allergies,
+      interests: formData.interests,
+    });
 
-    let expenses = null;
-    if (itinerary) {
-      expenses = await generateExpenseBreakdown(itinerary, formData.budget, formData.travelers);
-    }
-
-    if (itinerary) {
-      setGeneratedData({ itinerary, hotels, restaurants, places, expenses });
+    if (fullTrip) {
+      setGeneratedData({
+        itinerary: fullTrip.itinerary || null,
+        hotels: fullTrip.hotels || [],
+        restaurants: fullTrip.restaurants || [],
+        places: fullTrip.places || [],
+        expenses: fullTrip.expenses || null,
+      });
       setStep(4);
     }
-  }, [formData, numDays, validateStep, generateItinerary, suggestHotels, suggestRestaurants, suggestPlaces, generateExpenseBreakdown]);
+  }, [formData, numDays, validateStep, generateFullTrip]);
 
   // Save trip
   const handleSave = useCallback(() => {

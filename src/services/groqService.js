@@ -21,7 +21,7 @@ const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'mixtral-8x7b-32768',
+      model: 'llama-3.1-8b-instant',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -256,10 +256,71 @@ Make sure percentages add up to 100 and amounts are realistic for the ${budget} 
   return parseJSON(response);
 };
 
+/**
+ * Generate full trip (Itinerary, Hotels, Restaurants, Places, Expenses) in ONE call to save TPM rate limits
+ */
+export const generateFullTrip = async ({ destination, days, budget, travelers, preferences, allergies, interests }) => {
+  const systemPrompt = `You are a master travel planner. Generate a complete travel package including itinerary, hotels, restaurants, places to visit, and a budget breakdown. Return ONLY valid JSON wrapped in a markdown code block.`;
+
+  const userPrompt = `Create a complete ${days}-day travel package for ${destination}.
+Details:
+- Budget: ${budget}
+- Travelers: ${travelers}
+- Allergies/Diet: ${allergies || 'None'}
+- Interests: ${interests || 'None'}
+- General Notes: ${preferences || 'None'}
+
+Respond ONLY with this exact JSON structure (populate with 3 hotels, 4 restaurants, 5 places, and ${days} days of itinerary):
+\`\`\`json
+{
+  "itinerary": {
+    "destination": "${destination}",
+    "summary": "2-sentence summary",
+    "days": [
+      {
+        "day": 1,
+        "title": "Day title",
+        "activities": [
+          {
+            "id": "d1a1", "time": "09:00 AM", "period": "morning", "title": "Activity name", "description": "Brief description", "location": "Place", "duration": "2 hours", "estimatedCost": 25, "category": "sightseeing"
+          }
+        ]
+      }
+    ],
+    "tips": ["Tip 1", "Tip 2"]
+  },
+  "hotels": [
+    { "id": "h1", "name": "Hotel Name", "type": "hotel", "pricePerNight": 80, "totalPrice": 240, "rating": 4.5, "location": "Area", "amenities": ["WiFi"], "description": "Desc", "whyRecommended": "Why" }
+  ],
+  "restaurants": [
+    { "id": "r1", "name": "Name", "cuisine": "Cuisine", "priceRange": "$$", "avgMealCost": 15, "rating": 4.3, "location": "Area", "dietaryOptions": ["vegan"], "speciality": "Dish", "description": "Desc" }
+  ],
+  "places": [
+    { "id": "p1", "name": "Name", "type": "landmark", "entryFee": 10, "estimatedTime": "2 hours", "rating": 4.7, "description": "Desc", "bestTime": "Morning", "tips": "Tip" }
+  ],
+  "expenses": {
+    "categories": [
+      { "name": "Accommodation", "amount": 300, "percentage": 35, "color": "#FFB5C2" },
+      { "name": "Food & Dining", "amount": 200, "percentage": 23, "color": "#B5D8FF" },
+      { "name": "Transportation", "amount": 150, "percentage": 18, "color": "#D5B5FF" },
+      { "name": "Activities", "amount": 120, "percentage": 14, "color": "#B5FFD8" },
+      { "name": "Miscellaneous", "amount": 80, "percentage": 10, "color": "#FFD8B5" }
+    ],
+    "totalEstimated": 850, "perPerson": 850, "perDay": 283, "currency": "USD", "savingTips": ["Tip 1"]
+  }
+}
+\`\`\``;
+
+  // Give a very large token limit because it generates a huge JSON, but since it's only 1 request, TPM won't spike
+  const response = await callGroq(systemPrompt, userPrompt, 3500);
+  return parseJSON(response);
+};
+
 export default {
   generateItinerary,
   suggestHotels,
   suggestRestaurants,
   suggestPlaces,
   generateExpenseBreakdown,
+  generateFullTrip,
 };
