@@ -44,7 +44,7 @@ const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500, retries = 2)
           continue;
         }
         
-        throw new Error(errorData.error?.message || \`Groq API error: \${status}\`);
+        throw new Error(errorData.error?.message || `Groq API error: ${status}`);
       }
 
       const data = await response.json();
