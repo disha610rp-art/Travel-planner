@@ -23,13 +23,14 @@ const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500, retries = 2)
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gemma2-9b-it',
+          model: 'openai/gpt-oss-120b',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
-          temperature: 0.5, // Lowered temperature slightly for more stable JSON
+          temperature: 0.3,
           max_tokens: maxTokens,
+          response_format: { type: 'json_object' },
         }),
       });
 
@@ -57,21 +58,53 @@ const callGroq = async (systemPrompt, userPrompt, maxTokens = 1500, retries = 2)
 };
 
 /**
- * Parse JSON from AI response (handles markdown code blocks)
+ * Parse JSON from AI response — robust parser with multiple fallback strategies
  * @param {string} text - Raw AI response
  * @returns {*} Parsed JSON object
  */
 const parseJSON = (text) => {
-  // Try to extract JSON from markdown code blocks
-  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
-
-  try {
-    return JSON.parse(jsonStr);
-  } catch (e) {
-    console.error('Failed to parse AI response as JSON:', text);
-    throw new Error('AI returned an invalid response format. Please try again.');
+  if (!text || !text.trim()) {
+    throw new Error('AI returned an empty response. Please try again.');
   }
+
+  // Strategy 1: Direct parse (works when response_format: json_object is honored)
+  try {
+    return JSON.parse(text.trim());
+  } catch (_) { /* continue to next strategy */ }
+
+  // Strategy 2: Extract from markdown code blocks
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    try {
+      return JSON.parse(codeBlockMatch[1].trim());
+    } catch (_) { /* continue */ }
+  }
+
+  // Strategy 3: Find the first { ... } or [ ... ] block in the text
+  const firstBrace = text.indexOf('{');
+  const firstBracket = text.indexOf('[');
+  const startChar = (firstBrace >= 0 && (firstBracket < 0 || firstBrace < firstBracket)) ? '{' : '[';
+  const startIndex = startChar === '{' ? firstBrace : firstBracket;
+
+  if (startIndex >= 0) {
+    // Find the matching closing brace/bracket by counting depth
+    const endChar = startChar === '{' ? '}' : ']';
+    let depth = 0;
+    let endIndex = -1;
+    for (let i = startIndex; i < text.length; i++) {
+      if (text[i] === startChar) depth++;
+      if (text[i] === endChar) depth--;
+      if (depth === 0) { endIndex = i; break; }
+    }
+    if (endIndex > startIndex) {
+      try {
+        return JSON.parse(text.substring(startIndex, endIndex + 1));
+      } catch (_) { /* continue */ }
+    }
+  }
+
+  console.error('Failed to parse AI response as JSON. Raw response:', text.substring(0, 500));
+  throw new Error('AI returned an invalid response format. Please try again.');
 };
 
 /**
@@ -276,60 +309,25 @@ Make sure percentages add up to 100 and amounts are realistic for the ${budget} 
  * Generate full trip (Itinerary, Hotels, Restaurants, Places, Expenses) in ONE call to save TPM rate limits
  */
 export const generateFullTrip = async ({ destination, days, budget, travelers, preferences, allergies, interests }) => {
-  const systemPrompt = `You are a master travel planner. Generate a complete travel package including itinerary, hotels, restaurants, places to visit, and a budget breakdown. Return ONLY valid JSON wrapped in a markdown code block. Do not include any trailing text.`;
+  const systemPrompt = `You are a travel planner API. You MUST respond with a single valid JSON object only. No markdown, no explanation, no text before or after. Only output raw JSON.`;
 
-  const userPrompt = `Create a complete ${days}-day travel package for ${destination}.
-Details:
-- Budget: ${budget}
-- Travelers: ${travelers}
-- Allergies/Diet: ${allergies || 'None'}
-- Interests: ${interests || 'None'}
-- General Notes: ${preferences || 'None'}
+  const userPrompt = `Create a ${days}-day travel package for ${destination}. Budget: ${budget}. Travelers: ${travelers}. Diet: ${allergies || 'None'}. Interests: ${interests || 'None'}. Notes: ${preferences || 'None'}.
 
-Respond ONLY with this exact JSON structure. Keep descriptions very brief to save space.
-Populate with EXACTLY 2 hotels, 2 restaurants, 2 places, and ${days} days of itinerary.
-\`\`\`json
-{
-  "itinerary": {
-    "destination": "${destination}",
-    "summary": "2-sentence summary",
-    "days": [
-      {
-        "day": 1,
-        "title": "Day title",
-        "activities": [
-          {
-            "id": "d1a1", "time": "09:00 AM", "period": "morning", "title": "Activity name", "description": "Brief description", "location": "Place", "duration": "2 hours", "estimatedCost": 25, "category": "sightseeing"
-          }
-        ]
-      }
-    ],
-    "tips": ["Tip 1"]
-  },
-  "hotels": [
-    { "id": "h1", "name": "Hotel Name", "type": "hotel", "pricePerNight": 80, "totalPrice": 240, "rating": 4.5, "location": "Area", "amenities": ["WiFi"], "description": "Desc", "whyRecommended": "Why" }
-  ],
-  "restaurants": [
-    { "id": "r1", "name": "Name", "cuisine": "Cuisine", "priceRange": "$$", "avgMealCost": 15, "rating": 4.3, "location": "Area", "dietaryOptions": ["vegan"], "speciality": "Dish", "description": "Desc" }
-  ],
-  "places": [
-    { "id": "p1", "name": "Name", "type": "landmark", "entryFee": 10, "estimatedTime": "2 hours", "rating": 4.7, "description": "Desc", "bestTime": "Morning", "tips": "Tip" }
-  ],
-  "expenses": {
-    "categories": [
-      { "name": "Accommodation", "amount": 300, "percentage": 35, "color": "#FFB5C2" },
-      { "name": "Food & Dining", "amount": 200, "percentage": 23, "color": "#B5D8FF" },
-      { "name": "Transportation", "amount": 150, "percentage": 18, "color": "#D5B5FF" },
-      { "name": "Activities", "amount": 120, "percentage": 14, "color": "#B5FFD8" },
-      { "name": "Miscellaneous", "amount": 80, "percentage": 10, "color": "#FFD8B5" }
-    ],
-    "totalEstimated": 850, "perPerson": 850, "perDay": 283, "currency": "USD", "savingTips": ["Tip 1"]
-  }
-}
-\`\`\``;
+Return a JSON object with these keys: "itinerary", "hotels", "restaurants", "places", "expenses".
 
-  // Set tokens precisely to 2000 to guarantee it never exceeds 6000 TPM even on retries.
-  const response = await callGroq(systemPrompt, userPrompt, 2000);
+"itinerary" has: "destination" (string), "summary" (string), "days" (array of objects with "day" number, "title" string, "activities" array), "tips" (string array). Each activity has: "id", "time", "period", "title", "description", "location", "duration", "estimatedCost" (number), "category".
+
+"hotels" is an array of 2 objects with: "id", "name", "type", "pricePerNight", "totalPrice", "rating", "location", "amenities", "description", "whyRecommended".
+
+"restaurants" is an array of 2 objects with: "id", "name", "cuisine", "priceRange", "avgMealCost", "rating", "location", "dietaryOptions", "speciality", "description".
+
+"places" is an array of 2 objects with: "id", "name", "type", "entryFee", "estimatedTime", "rating", "description", "bestTime", "tips".
+
+"expenses" has: "categories" (array of 5 objects with "name", "amount", "percentage", "color"), "totalEstimated", "perPerson", "perDay", "currency", "savingTips".
+
+Include 3 activities per day. Keep all descriptions under 15 words. Use realistic prices.`;
+
+  const response = await callGroq(systemPrompt, userPrompt, 3000);
   return parseJSON(response);
 };
 
